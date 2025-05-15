@@ -25,10 +25,10 @@
 
   <!-- Barre latérale : Ajout collection -->
   <aside class="w-1/5 flex flex-col justify-between text-pink-700">
-    <div class="flex flex-col gap-5 items-start">
-      <h2 class="text-2xl font-semibold tracking-wide drop-shadow-sm">Ajouter une collection</h2>
+    <div class="space-y-4 bg-white p-4 rounded-xl shadow space-y-3">
+      <h2 class="text-2xl drop-shadow-sm font-bold tracking-widest">Ajouter une collection</h2>
       <form method="POST" action="{% url 'add' %}"
-            class="flex flex-col gap-4 p-5 rounded-2xl bg-pink-200 border border-pink-400 shadow-md font-medium">
+            class="flex flex-col gap-4 w-full">
         {% csrf_token %}
         <input type="text" name="name" required placeholder="Nom de la collection"
                class="px-4 py-3 bg-pink-100 text-pink-700 rounded-lg border border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-300 placeholder:text-pink-400 placeholder:opacity-90 placeholder:font-normal transition" />
