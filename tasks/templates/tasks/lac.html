@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr" class="font-[Patrick_Hand]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnakeNote</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <style>
+    /* Glassmorphism léger */
+    .glass {
+      background: rgba(255 255 255 / 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255 255 255 / 0.4);
+      border-radius: 1rem;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex gap-6 p-6 text-[#2A4D33] font-[Patrick_Hand]"
+      style="background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+             background-size: cover;">
+
+  <!-- Barre latérale : Ajout collection -->
+  <aside class="w-1/5 flex flex-col justify-between">
+    <div class="flex flex-col gap-4 items-start glass p-6 border border-[#A3C4D7] shadow-md">
+      <h2 class="text-2xl font-bold tracking-widest text-[#4A7D9B] drop-shadow-sm">Ajouter une collection</h2>
+      <form method="POST" action="{% url 'add' %}" class="flex flex-col gap-4 w-full">
+        {% csrf_token %}
+        <input type="text" name="name" required placeholder="Nom de la collection"
+               class="px-4 py-2 rounded-md bg-[#D9EFF8CC] text-[#35586C] border border-[#7FA9BF] placeholder-[#7FA9BF] focus:outline-none focus:ring-4 focus:ring-[#A3C4D7] transition" />
+        <button type="submit"
+                class="w-full py-2 rounded-md bg-gradient-to-b from-[#7FA9BF] to-[#4A7D9B] text-[#E7F1F8] font-semibold shadow-sm hover:from-[#9BBED4] hover:to-[#7FA9BF] transition">
+          Ajouter
+        </button>
+      </form>
+    </div>
+    {% include "tasks/theme.html" %}
+    <div class="mt-12 text-sm text-[#7FA9BF] font-semibold">
+      <a href="/admin" class="hover:text-[#A3C4D7] transition">← Espace admin</a>
+    </div>
+  </aside>
+
+  <!-- Carnet principal -->
+  <main class="flex-1 p-8 glass relative overflow-hidden">
+
+    <!-- Marque-pages / Collections -->
+    <div class="absolute left-6 top-6 flex gap-4">
+      {% for collection in collections %}
+        <form method="get" action="">
+          <button type="submit" name="collection" value="{{ collection.slug }}"
+                  class="bg-[#A3C4D7CC] border border-[#4A7D9B] shadow-md px-5 py-2 text-sm font-semibold text-[#35586C] rounded-3xl
+                         hover:bg-[#4A7D9B] hover:text-[#E7F1F8] hover:shadow-lg transition duration-200 ease-in-out">
+            {{ collection.name }}
+          </button>
+        </form>
+      {% endfor %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <ul class="mb-8 mt-24 space-y-4">
+        {% for message in messages %}
+          <li class="
+            {% if message.tags == 'success' %}
+              bg-[#7FA9BFCC] border border-[#4A7D9B] text-[#4A7D9B] rounded-2xl px-6 py-3 font-semibold shadow-lg
+            {% elif message.tags == 'warning' %}
+              bg-[#E3C3A9CC] border border-[#A67A4C] text-[#A67A4C] rounded-2xl px-6 py-3 font-semibold shadow-lg
+            {% endif %}
+            drop-shadow-md
+          ">
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if collection.slug %}
+    <!-- Bloc entouré : Ajout tâche + Liste -->
+    <section class="border border-[#4A7D9B] p-8 mt-16 bg-[#D9EFF8CC] shadow-inner rounded-3xl">
+
+      <!-- Ajouter une tâche -->
+      <div class="mb-10">
+        <h2 class="text-2xl font-semibold tracking-wide text-[#35586C] mb-6 drop-shadow-sm">Ajouter une tâche</h2>
+        <form method="POST" action="{% url 'add-task' %}" class="flex gap-4">
+          {% csrf_token %}
+          <input type="hidden" name="collection-slug" value="{{ collection.slug }}">
+          <input type="text" name="task-description" required placeholder="Description"
+                 class="flex-1 px-5 py-3 rounded-lg bg-[#C7E6F7] text-[#35586C] border border-[#7FA9BF]
+                        focus:outline-none focus:ring-4 focus:ring-[#A3C4D7] placeholder:text-[#7FA9BF]
+                        placeholder:opacity-80 placeholder:font-normal transition" />
+          <button type="submit"
+                  class="bg-[#4A7D9B] text-[#E7F1F8] font-semibold rounded-lg shadow-md
+                         transition-colors duration-300 ease-in-out
+                         hover:bg-[#7FADCA] py-3 px-8 font-bold">
+            Ajouter
+          </button>
+        </form>
+      </div>
+
+      <!-- Liste des tâches -->
+      <div>
+        <h2 class="text-2xl font-semibold tracking-wide text-[#35586C] mb-6 drop-shadow-sm">Tâches</h2>
+        <ul class="space-y-4">
+          {% for task in tasks %}
+          <li class="bg-[#A3C4DBCC] border border-[#4A7D9B] shadow-md px-6 py-5 rounded-3xl flex justify-between items-center text-[#35586C] font-semibold transition hover:bg-[#4A7D9B] hover:text-[#E7F1F8]">
+            <span>{{ task.description }}</span>
+            <form method="POST" action="{% url 'delete-task' task.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="text-[#4A7D9B] font-bold hover:text-[#E7F1F8] text-3xl leading-none transition duration-200">×</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Supprimer la collection -->
+      <form method="POST" action="{% url 'delete-collection' collection.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-[#4A7D9B] hover:text-[#7FA9BF] mt-10 font-semibold transition duration-200 drop-shadow-sm">Supprimer cette collection</button>
+      </form>
+
+    </section>
+    {% endif %}
+
+  </main>
+</body>
+</html>

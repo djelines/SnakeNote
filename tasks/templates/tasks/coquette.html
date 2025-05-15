@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr" class="bg-pink-50 text-pink-700 font-[Quicksand]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnakeNote</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    @layer utilities {
+      .bg-bowtie-dots {
+        background-color: #fff0f6; /* très clair rosé */
+        background-image:
+          radial-gradient(circle 2px at 10px 10px, #f9a8d4 99%, transparent 100%), /* pois roses */
+          radial-gradient(circle 2px at 30px 30px, #f9a8d4 99%, transparent 100%); /* noeud papillon rose */
+        background-repeat: repeat, repeat, repeat;
+        background-size: 40px 40px, 40px 40px, 80px 80px;
+        background-position: 0 0, 20px 20px, 10px 10px;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex gap-6 p-6 bg-bowtie-dots text-pink-700">
+
+  <!-- Barre latérale : Ajout collection -->
+  <aside class="w-1/5 flex flex-col justify-between text-pink-700">
+    <div class="flex flex-col gap-5 items-start">
+      <h2 class="text-2xl font-semibold tracking-wide drop-shadow-sm">Ajouter une collection</h2>
+      <form method="POST" action="{% url 'add' %}"
+            class="flex flex-col gap-4 p-5 rounded-2xl bg-pink-200 border border-pink-400 shadow-md font-medium">
+        {% csrf_token %}
+        <input type="text" name="name" required placeholder="Nom de la collection"
+               class="px-4 py-3 bg-pink-100 text-pink-700 rounded-lg border border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-300 placeholder:text-pink-400 placeholder:opacity-90 placeholder:font-normal transition" />
+        <button type="submit"
+                class="bg-pink-400 text-pink-900 font-semibold rounded-lg shadow-md
+                       transition-colors duration-300 ease-in-out
+                       hover:bg-pink-600 hover:text-white
+                       hover:shadow-lg py-3 px-6 font-bold">
+          Ajouter
+        </button>
+      </form>
+    </div>
+    {% include "tasks/theme.html" %}
+    <div class="mt-20 text-sm font-semibold tracking-wide">
+      <a href="/admin" class="hover:text-pink-500 transition drop-shadow-sm">← Espace admin</a>
+    </div>
+  </aside>
+
+  <!-- Carnet principal -->
+  <main class="flex-1 p-8 bg-pink-100 bg-opacity-90 border border-pink-400 shadow-lg rounded-3xl relative overflow-hidden">
+
+    <!-- Marque-pages / Collections -->
+    <div class="absolute left-6 top-6 flex gap-4">
+      {% for collection in collections %}
+        <form method="get" action="">
+          <button type="submit" name="collection" value="{{ collection.slug }}"
+                  class="bg-pink-300 border-2 border-pink-400 shadow-sm px-5 py-2 text-sm font-semibold text-pink-700 rounded-3xl
+                         hover:bg-pink-400 hover:shadow-md transition duration-200 ease-in-out">
+            {{ collection.name }}
+          </button>
+        </form>
+      {% endfor %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <ul class="mb-8 mt-24 space-y-4">
+        {% for message in messages %}
+          <li class="
+            {% if message.tags == 'success' %}
+              bg-pink-200 border border-pink-500 text-pink-700 rounded-2xl px-6 py-3 font-semibold shadow-md
+            {% elif message.tags == 'warning' %}
+              bg-red-200 border border-red-500 text-red-700 rounded-2xl px-6 py-3 font-semibold shadow-md
+            {% endif %}
+            drop-shadow-sm
+          ">
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if collection.slug %}
+    <!-- Bloc entouré : Ajout tâche + Liste -->
+    <section class="border border-pink-400 p-8 mt-16 bg-pink-200 shadow-inner rounded-3xl">
+
+      <!-- Ajouter une tâche -->
+      <div class="mb-10">
+        <h2 class="text-2xl font-semibold tracking-wide text-pink-700 mb-6 drop-shadow-sm">Ajouter une tâche</h2>
+        <form method="POST" action="{% url 'add-task' %}" class="flex gap-4">
+          {% csrf_token %}
+          <input type="hidden" name="collection-slug" value="{{ collection.slug }}">
+          <input type="text" name="task-description" required placeholder="Description"
+                 class="flex-1 px-5 py-3 rounded-lg bg-pink-100 text-pink-700 border border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-300 placeholder:text-pink-400 placeholder:opacity-90 placeholder:font-normal transition" />
+          <button type="submit"
+                  class="bg-pink-400 text-pink-900 font-semibold rounded-lg shadow-md
+                         transition-colors duration-300 ease-in-out
+                         hover:bg-pink-600 hover:text-white
+                         hover:shadow-lg py-3 px-8 font-bold">
+            Ajouter
+          </button>
+        </form>
+      </div>
+
+      <!-- Liste des tâches -->
+      <div>
+        <h2 class="text-2xl font-semibold tracking-wide text-pink-700 mb-6 drop-shadow-sm">Tâches</h2>
+        <ul class="space-y-4">
+          {% for task in tasks %}
+          <li class="bg-pink-300 border-2 border-pink-400 shadow-md px-6 py-5 rounded-3xl flex justify-between items-center text-pink-700 font-medium transition hover:bg-pink-400">
+            <span>{{ task.description }}</span>
+            <form method="POST" action="{% url 'delete-task' task.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="text-pink-600 font-semibold hover:text-pink-400 text-3xl leading-none transition duration-200">×</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Supprimer la collection -->
+      <form method="POST" action="{% url 'delete-collection' collection.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-pink-600 hover:text-pink-400 mt-10 font-semibold transition duration-200 drop-shadow-sm">Supprimer cette collection</button>
+      </form>
+
+    </section>
+    {% endif %}
+
+  </main>
+
+</body>
+</html>

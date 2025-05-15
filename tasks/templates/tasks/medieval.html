@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr" class="bg-[#3B2F2F] text-[#D9C7A1] font-serif" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnakeNote</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex gap-6 p-6 bg-[#3B2F2F]">
+
+  <!-- Barre latérale -->
+  <aside class="w-1/5 flex flex-col justify-between">
+    <div class="flex flex-col gap-4 items-start bg-[#E9D9B5]/90 backdrop-blur-sm rounded-lg p-6 border-4 border-[#A67C3D] shadow-lg shadow-[#4B3B1B]/60">
+      <h2 class="text-2xl font-bold tracking-widest text-[#5A3E1B] drop-shadow-md">Ajouter une collection</h2>
+      <form method="POST" action="{% url 'add' %}" class="flex flex-col gap-4 w-full">
+        {% csrf_token %}
+        <input type="text" name="name" required placeholder="Nom de la collection"
+               class="px-4 py-2 rounded-md bg-[#F9F0D9] text-[#5A3E1B] border-2 border-[#B89E61] placeholder-[#B59F69] focus:outline-none focus:ring-4 focus:ring-[#B89E61]/70 transition" />
+        <button type="submit"
+                class="w-full py-2 rounded-md bg-gradient-to-b from-[#B89E61] to-[#7B5E2E] text-[#3E2E0C] font-semibold shadow-sm shadow-[#4B3B1B] hover:from-[#C2AA6F] hover:to-[#8B7031] transition">
+          Ajouter
+        </button>
+      </form>
+    </div>
+    {% include "tasks/theme.html" %}
+    <div class="mt-12 text-sm text-[#B59F69] font-semibold">
+      <a href="/admin" class="hover:text-[#D9C57B] transition">← Espace admin</a>
+    </div>
+  </aside>
+
+  <!-- Zone principale -->
+  <main
+    class="flex-1 p-8 bg-[#F9F0D9]/90 border-4 border-[#A67C3D] rounded-xl shadow-[0_0_30px_#7B5E2E]/50 relative overflow-hidden
+           backdrop-blur-sm flex flex-col">
+
+    <!-- Marque-pages -->
+    <div class="absolute left-8 top-8 flex gap-4 z-10">
+      {% for collection in collections %}
+      <form method="get" action="">
+        <button type="submit" name="collection" value="{{ collection.slug }}"
+                class="px-5 py-2 text-sm font-bold rounded-lg border-2 border-[#B89E61] shadow-md
+                       bg-gradient-to-br from-[#D9C57B] to-[#A67C3D] text-[#5A3E1B]
+                       hover:bg-[#5A3E1B] hover:text-[#F9F0D9] hover:shadow-lg transition">
+          {{ collection.name }}
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <ul class="mb-6 mt-28 space-y-4 z-10 relative">
+      {% for message in messages %}
+      <li class="{% if message.tags == 'success' %}bg-[#C2AA6F]/90 text-[#3E2E0C] border border-[#A67C3D] shadow-md px-6 py-3 rounded-lg font-semibold
+                 {% elif message.tags == 'warning' %}bg-[#B35E2E]/90 text-[#3E1B0C] border border-[#7B5E2E] shadow-md px-6 py-3 rounded-lg font-semibold{% endif %}">
+        {{ message }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if collection.slug %}
+    <!-- Ajout de tâche et affichage -->
+    <section
+      class="p-8 mt-16 bg-[#E9D9B5]/95 border-4 border-[#A67C3D] rounded-xl shadow-inner shadow-[#7B5E2E]/40
+             flex flex-col gap-8 z-10">
+
+      <!-- Ajouter une tâche -->
+      <div>
+        <h2 class="text-xl font-bold tracking-wide mb-5 text-[#5A3E1B] drop-shadow-md">Ajouter une tâche</h2>
+        <form method="POST" action="{% url 'add-task' %}" class="flex gap-6">
+          {% csrf_token %}
+          <input type="hidden" name="collection-slug" value="{{ collection.slug }}">
+          <input type="text" name="task-description" required placeholder="Description"
+                 class="flex-1 px-5 py-3 rounded-md bg-[#F9F0D9] text-[#5A3E1B] border-2 border-[#B89E61]
+                        placeholder-[#B59F69] focus:outline-none focus:ring-4 focus:ring-[#B89E61]/70 transition" />
+          <button type="submit"
+                  class="px-8 py-3 rounded-md bg-gradient-to-b from-[#B89E61] to-[#7B5E2E] text-[#3E2E0C] font-bold  shadow-sm  shadow-[#4B3B1B]
+                         hover:from-[#C2AA6F] hover:to-[#8B7031] transition">
+            Ajouter
+          </button>
+        </form>
+      </div>
+
+      <!-- Liste des tâches -->
+      <div class="flex-1">
+        <h2 class="text-xl font-bold tracking-wide mb-6 text-[#5A3E1B] drop-shadow-md">Tâches</h2>
+        <ul class="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#A67C3D]/80 scrollbar-track-[#F9F0D9]/30">
+          {% for task in tasks %}
+          <li
+            class="p-5 rounded-lg flex justify-between items-center border-2 border-[#B89E61] shadow-lg bg-gradient-to-br from-[#D9C57B] to-[#A67C3D] text-[#3E2E0C]">
+            <span>{{ task.description }}</span>
+            <form method="POST" action="{% url 'delete-task' task.pk %}">
+              {% csrf_token %}
+              <button type="submit"
+                      class="text-[#7B5E2E] font-bold hover:text-[#D9B37C] text-3xl leading-none transition">×</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Supprimer la collection -->
+      <form method="POST" action="{% url 'delete-collection' collection.pk %}" class="mt-8 text-right">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-[#7B5E2E] hover:text-[#D9B37C] font-semibold transition">
+          Supprimer cette collection
+        </button>
+      </form>
+
+    </section>
+    {% endif %}
+
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnakeNote</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-yellow-50 min-h-screen p-6 font-sans flex gap-6">
+
+  <!-- Barre latérale -->
+  <aside class="w-1/5 flex flex-col justify-between">
+    <div class="space-y-4">
+      <h2 class="text-xl font-bold text-gray-700">Ajouter une collection</h2>
+      <form method="POST" action="{% url 'add' %}" class="bg-white p-4 rounded-xl shadow space-y-3">
+        {% csrf_token %}
+        <input type="text" name="name" required placeholder="Nom de la collection"
+               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-yellow-300" />
+        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded font-medium">Ajouter</button>
+      </form>
+    </div>
+
+    {% include "tasks/theme.html" %}
+
+    <div class="mt-16 text-blue-700 text-sm hover:underline">
+      <a href="/admin">← Espace admin</a>
+    </div>
+  </aside>
+
+  <!-- Carnet principal -->
+  <main class="flex-1 bg-white border-4 border-yellow-300 rounded-2xl shadow-xl relative px-6 mt-14">
+
+    <!-- Onglets de collections -->
+    <div class="absolute -top-8 left-6 flex gap-2">
+      {% for collection in collections %}
+        <form method="get" action="">
+          <button type="submit" name="collection" value="{{ collection.slug }}"
+                  class="{% cycle 'bg-yellow-200' 'bg-pink-200' 'bg-green-200' 'bg-blue-200' 'bg-purple-200' %}
+                         px-4 py-1 rounded-t-xl border border-gray-300 shadow-sm text-sm font-medium hover:opacity-90">
+            {{ collection.name }}
+          </button>
+        </form>
+      {% endfor %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <ul class="mt-8 space-y-2">
+        {% for message in messages %}
+          <li class="px-4 py-2 rounded-md text-sm border
+                     {% if message.tags == 'success' %}
+                       text-green-800 bg-green-100 border-green-300
+                     {% elif message.tags == 'warning' %}
+                       text-red-800 bg-red-100 border-red-300
+                     {% endif %}">
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if collection.slug %}
+    <!-- Bloc carnet -->
+    <section class="mt-16 bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 shadow-inner space-y-6">
+
+      <!-- Ajout tâche -->
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Nouvelle tâche</h2>
+        <form method="POST" action="{% url 'add-task' %}" class="flex gap-3">
+          {% csrf_token %}
+          <input type="hidden" name="collection-slug" value="{{ collection.slug }}" />
+          <input type="text" name="task-description" required placeholder="Description"
+                 class="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-yellow-300" />
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Ajouter</button>
+        </form>
+      </div>
+
+      <!-- Liste tâches -->
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">📋 Liste des tâches</h2>
+        <ul class="space-y-2">
+          {% for task in tasks %}
+          <li class="bg-white p-3 border rounded shadow-sm flex justify-between items-center">
+            <span class="text-gray-700">{{ task.description }}</span>
+            <form method="POST" action="{% url 'delete-task' task.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="text-red-500 hover:text-red-700 text-xl font-bold">×</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Supprimer collection -->
+      <form method="POST" action="{% url 'delete-collection' collection.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-red-600 hover:text-red-800">Supprimer cette collection</button>
+      </form>
+    </section>
+    {% endif %}
+
+  </main>
+</body>
+</html>

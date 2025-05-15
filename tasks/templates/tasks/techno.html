@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="fr" class="bg-gray-900 text-cyan-300">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnakeNote</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @layer utilities {
+      /* Background glitch & grid lines */
+      .bg-techno-glitch {
+        position: relative;
+        background:
+          /* lignes horizontales */
+          repeating-linear-gradient(
+            0deg,
+            rgba(0,255,255,0.07),
+            rgba(0,255,255,0.07) 1px,
+            transparent 1px,
+            transparent 6px
+          ),
+          /* lignes verticales */
+          repeating-linear-gradient(
+            90deg,
+            rgba(0,255,255,0.05),
+            rgba(0,255,255,0.05) 1px,
+            transparent 1px,
+            transparent 8px
+          ),
+          /* glitch blocks */
+          linear-gradient(90deg, transparent 45%, #0ff 50%, transparent 55%) 0 0 / 100% 4px repeat-x,
+          linear-gradient(0deg, transparent 45%, #0ff 50%, transparent 55%) 0 0 / 4px 100% repeat-y,
+          #111827;
+        background-blend-mode: screen;
+        animation: glitch-move 6s linear infinite;
+      }
+
+      @keyframes glitch-move {
+        0% {
+          background-position:
+            0 0,
+            0 0,
+            0 0,
+            0 0;
+        }
+        50% {
+          background-position:
+            0 4px,
+            4px 0,
+            0 2px,
+            2px 0;
+        }
+        100% {
+          background-position:
+            0 0,
+            0 0,
+            0 0,
+            0 0;
+        }
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex gap-6 p-6 bg-techno-glitch text-cyan-300">
+
+  <!-- Barre latérale : Ajout collection -->
+  <aside class="w-1/5 flex flex-col justify-between text-cyan-300">
+    <div class="flex flex-col gap-4 items-start">
+      <h2 class="text-xl font-semibold tracking-wide">Ajouter une collection</h2>
+      <form method="POST" action="{% url 'add' %}" class="flex flex-col gap-3 p-4 rounded-lg bg-gradient-to-br from-[#073642] to-[#002b36] border-2 border-cyan-400 shadow-inner shadow-cyan-400/70 text-cyan-300">
+        {% csrf_token %}
+        <input type="text" name="name" required placeholder="Nom de la collection"
+               class="px-3 py-2 bg-gray-800 text-cyan-300 rounded border border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+        <button type="submit"
+          class="bg-cyan-700 text-cyan-200 font-bold rounded shadow-[0_0_8px_#0ff,0_0_20px_#0ff] hover:shadow-[0_0_20px_#0ff,0_0_40px_#0ff] hover:bg-cyan-500 hover:text-black transition px-4 py-2 w-full">
+          Ajouter
+        </button>
+      </form>
+    </div>
+    {% include "tasks/theme.html" %}
+    <div class="mt-12 text-sm">
+      <a href="/admin" class="hover:text-cyan-400 transition">← Espace admin</a>
+    </div>
+  </aside>
+
+  <!-- Carnet principal -->
+  <main class="flex-1 p-6 bg-gray-800 border-2 border-cyan-400 shadow-[0_0_12px_#0ff] rounded-lg relative overflow-hidden">
+
+    <!-- Marque-pages / Collections -->
+    <div class="absolute left-6 top-6 flex gap-3">
+      {% for collection in collections %}
+        <form method="get" action="">
+          <button type="submit" name="collection" value="{{ collection.slug }}"
+                  class="bg-gradient-to-br from-[#073642] to-[#002b36] border-2 border-cyan-400 text-cyan-300 shadow-inner shadow-cyan-400/70 filter drop-shadow-[0_0_5px_#0ff] px-4 py-1 text-sm font-semibold hover:bg-cyan-900 hover:shadow-lg transition rounded">
+            {{ collection.name }}
+          </button>
+        </form>
+      {% endfor %}
+    </div>
+
+    {% if messages %}
+      <ul class="mb-4 mt-20">
+        {% for message in messages %}
+          <li class="{% if message.tags == 'success' %}bg-[#002b36] text-green-400 border border-green-500 shadow-[0_0_10px_#0f0] px-4 py-2 rounded font-semibold{% elif message.tags == 'warning' %}bg-[#330000] text-red-400 border border-red-500 shadow-[0_0_10px_#f00] px-4 py-2 rounded font-semibold{% endif %}">
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if collection.slug %}
+    <section class="border-2 border-cyan-400 shadow-[0_0_12px_#0ff] p-6 mt-12 bg-gray-900 shadow-inner rounded-lg">
+
+      <!-- Ajouter une tâche -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold tracking-wide text-cyan-300 mb-3">Ajouter une tâche</h2>
+        <form method="POST" action="{% url 'add-task' %}" class="flex gap-3">
+          {% csrf_token %}
+          <input type="hidden" name="collection-slug" value="{{ collection.slug }}">
+          <input type="text" name="task-description" required placeholder="Description"
+                 class="flex-1 px-4 py-2 rounded bg-gray-800 text-cyan-300 border border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+          <button type="submit"
+            class="bg-cyan-700 text-cyan-200 font-bold rounded shadow-[0_0_8px_#0ff,0_0_20px_#0ff] hover:shadow-[0_0_20px_#0ff,0_0_40px_#0ff] hover:bg-cyan-500 hover:text-black transition px-5">
+            Ajouter
+          </button>
+        </form>
+      </div>
+
+      <!-- Liste des tâches -->
+      <div>
+        <h2 class="text-lg font-semibold tracking-wide text-cyan-300 mb-4">Tâches</h2>
+        <ul class="space-y-3">
+          {% for task in tasks %}
+          <li class="bg-gradient-to-br from-[#073642] to-[#002b36] p-4 rounded flex justify-between items-center border border-cyan-500 text-cyan-300 shadow-lg filter drop-shadow-[0_0_5px_#0ff]">
+            <span>{{ task.description }}</span>
+            <form method="POST" action="{% url 'delete-task' task.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="text-red-500 font-bold hover:text-red-700 text-2xl leading-none transition">×</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Supprimer la collection -->
+      <form method="POST" action="{% url 'delete-collection' collection.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-red-400 hover:text-red-700 mt-8">Supprimer cette collection</button>
+      </form>
+
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>
